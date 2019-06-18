@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 import os
-import hashlib
 from sys import argv
 import datetime
-import pdb
 import sqlite3
-import datetime
-#Check for the magic library.
+
+#Check for the magic library that identifies file types.
 try:
     import magic 
 
@@ -17,6 +15,7 @@ except ImportError:
           Or go to the Github page: \n\
           - https://github.com/ahupp/python-magic")
 
+#Check if we have our custom queries.
 try:
     from iosquery import query
 
@@ -26,21 +25,24 @@ except ImportError:
 
 '''
 #The glass.py script will traverse through a phone backup and look for database files. 
-#It will then open these files up in sqlite 3 and attempt to execute multiple queries. 
-#The output of each query will be stored in a file that is inside of a new folder made by the script each #execution. 
+#It will then open these files up in sqlite3 and attempt to execute queries. 
+#The output of each query will be stored in a file that is inside of a new folder.
+#If a query causes an error, rather than a new file being made, the output will go to an error log.
 
 #Naming format: [date][root]/[db][query].csv
 
 #Example:
-#2019-5-07-zachbackup/glassdoorSELECTcompany.csv
-#2019-6-04-zachbackup/glassdoorJOINnotifications.csv
-#2019-6-05-zachbackup2/glassdoorSELECTtimestamps.csv
+#2019-5-07-zachbackup/glassdoorSELECT.csv
+#2019-6-04-zachbackup/glassdoorJOIN.csv
+#2019-6-05-zachbackup2/glassdoorSELECT.csv
 
 #Dependencies: 
 #pip install python-magic
 '''
 
-#This function walks through the direectories to find database files.
+#Process directories walks through the direectories to find database files.
+#It uses magic.Magic to check the filetype.
+#Right now we are checking if the file is "SQLite 3.x" but we can add more checks.
 def processDirectories(directory):
     for root, dirs, files in os.walk(directory):
         filecount = 0
@@ -55,85 +57,65 @@ def processDirectories(directory):
                 result = runthrough(fname, file)
             else:
                 result = False
-
+            
+            #We can keep track of how many files we found that match what we are looking for.
             if result:
-                #What do we want?
                 dbfiles += 1
             else:
                 filecount += 1
+                
     print("{} files scanned!".format(filecount))
     print("{} database files found!".format(dbfiles))
 
 def runthrough(dbpath, db):
     if os.path.exists(dbpath):
-        #Grabs our pre-made select statements.
-        #print("PATH IS REAL")
-        #print(dbpath)
+        #Verify that the target is a glassdoor database.
         if "glassdoor" in dbpath.lower():
+            #Iterate over our pre-made queries.
+            #We can return true to track our count of databases.
             for i in query.getSelect():
                 dbexec(db, i, os.path.abspath(dbpath))
             return True
+    #If neither if statement is true, then we can return False by default.
+    return False
 
-        else:
-            return False
-    else:
-        return False
-
+#dbexec will open up a database using sqlite3 and execute an argument passed to it.
+#any errors will be logged to an error file.
+#Filedate is based on HourMinute
 def dbexec(db, command, fullpath):
-    #Runs commands on the database.
-    #Open db
-    #print(os.getcwd())
     try:
-        #print('{}'.format(fullpath))
-        #print(os.getcwd)
-        #print(command)
         conn = sqlite3.connect('{}'.format(fullpath))
-        
-        #Run command
-        #If successful output to csv
-        #Filedate is HourMinute
-        #Else write to error log
         curr = conn.cursor()
-        output = []
-        for row in curr.execute(command):
-            #print(row)
-            output.append(row)
 
-        conn.close()
-        #print(output)
-        #We have some complex string formatting.
-        #Since the queries can contain a * 
-        #our dynamic naming options will be limited.
-        #also makes the directory
+        #Some messy directory formatting to get what we want.
         dirDate = str(datetime.datetime.now()).split(" ")[0]
         dirDesc = str(db.split(" ")[-1].split(".")[0])
         dirName = "{}-{}".format(dirDate, dirDesc)
+        
+        #Make a new directory to store the output in.
         try:
             os.mkdir(dirName)
         except FileExistsError:
-            print("{} Directory already exists".format(dirName))
-        #example: 2019-06-11-glassdoor
+            #Folder already exists so nothing to do.
+            pass
+
         fileDate =  str(datetime.datetime.now()).split(" ")[1].split(":")[:2]
         fileDate = fileDate[0] + fileDate[1]
         fileCommand = command.split(" ")[:1][0]
         fileName = "{}{}{}".format(dirDesc, fileCommand, fileDate)
-        #print("{}/{}.csv".format(dirName, fileName))
+        
+        #Open a file and write the command output to it.
         with open("{}/{}.csv".format(dirName, fileName), "w+") as newFile:
-            for line in output:
-                newFile.write(str(line))
+            for row in curr.execute(command):
+                newFile.write(str(row))
+                
+        conn.close()
     except:
-        #Errlog will be an existing file that we keep adding to
-        #Might change this implementation later on if too crowded
-        #or purge it after each analysis
         with open("errorlog.csv", "w+") as errlog:
             errlog.write("Error with database: {} performing command: {}".format(db, command))
 
-
-
+#We could add a menu here depending on how we want to expand the program. 
 if __name__ == '__main__':
-    #Grab our arguments. 
-    #Script is the name of our script
-    #Directory is the name of the directory to start traversal.
     print("Running glass.py v0.0.1")
     script, directory = argv
     processDirectories(directory)
