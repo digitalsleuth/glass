@@ -40,10 +40,10 @@ except ImportError:
 #pip install python-magic
 '''
 
-#Process directories walks through the direectories to find database files.
+#Crawl walks through the direectories to find database files.
 #It uses magic.Magic to check the filetype.
 #Right now we are checking if the file is "SQLite 3.x" but we can add more checks.
-def processDirectories(directory):
+def crawl(directory):
     for root, dirs, files in os.walk(directory):
         filecount = 0
         dbfiles = 0
@@ -118,4 +118,4 @@ def dbexec(db, command, fullpath):
 if __name__ == '__main__':
     print("Running glass.py v0.0.1")
     script, directory = argv
-    processDirectories(directory)
+    crawl(directory)
