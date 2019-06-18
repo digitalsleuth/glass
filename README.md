@@ -19,11 +19,34 @@ Dependencies:
 
 ### Linux
 
-- 
+- Open command line.
+- Type `pip3 install python-magic` to ensure dependeices are satisfied.
+- Navigate to the directory you want to work in.
+- `git clone https://github.com/IronCityCoder/glass.git`
+- This makes a new folder called 'glass'
+- Use the command `cd glass` to navigate to the tools.
+
 ## Running the program
 
 ### Windows
 
-- `
+- Open up command line and navigate to the directory. 
+- `./glass.py [path to directory]`
 
 ### Linux
+
+- After following installation, you should already be in the directory.
+- Run `chmod +x *` to allow all the files to be run.
+- `./glass.py [path to directory]`
+
+
+## Development
+
+Feel free to submit feedback, bug reports, and your own tweaks to the program! I plan on having a schedule to update this tool, but I will be working on making others in the meanwhile. 
+
+Future goals I have for this are:
+
+- Expand sql queries.
+- Create arguments for app type.
+ - Rather than just check for glassdoor by default, I'd like to be able to have the user pass in the app they wish to analyze. This would require having multiple files with queries that work for those databases though. 
+ - More options in general, such as specificying output type, running only SELECT statements, etc.
