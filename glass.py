@@ -1,19 +1,9 @@
 #!/usr/bin/env python3
-import os
+import pathlib
 from sys import argv
 import datetime
 import sqlite3
-
-#Check for the magic library that identifies file types.
-try:
-    import magic 
-
-except ImportError:
-    print("python-magic is not installed! \n\
-          Install it with pip: \n\
-          -  pip install python-magic \n\
-          Or go to the Github page: \n\
-          - https://github.com/ahupp/python-magic")
+import math
 
 #Check if we have our custom queries.
 try:
@@ -39,83 +29,77 @@ except ImportError:
 #Dependencies: 
 #pip install python-magic
 '''
+#Quick function to log errors.
+def logerror(message):
+  with open("errorlog.csv", "w+") as errlog:
+    errlog.write(message)
 
-#Crawl walks through the direectories to find database files.
-#It uses magic.Magic to check the filetype.
-#Right now we are checking if the file is "SQLite 3.x" but we can add more checks.
+dirs = []
+#Function to grab dbpaths out of a pathlib object.
+def grabdb(obj):
+  for i in obj:
+    #Verify that the target is a glassdoor database.
+    if "glassdoor" in str(i).lower():
+      dirs.append(str(i))
+
+#Crawl uses pathlib to find all database files.
+#We then call runthrough which tries to open them up.
 def crawl(directory):
-    for root, dirs, files in os.walk(directory):
-        filecount = 0
-        dbfiles = 0
-        for file in files:
-            fname = os.path.join(root, file)
-            #Check if ftype is a sqlite file.
-            #If mime is true we need another condition to check for.
-            m = magic.Magic(mime=False)
-            ftype = m.from_file(os.path.abspath(fname))
-            if "SQLite 3.x" in ftype:
-                result = runthrough(fname, file)
-            else:
-                result = False
-            
-            #We can keep track of how many files we found that match what we are looking for.
-            if result:
-                dbfiles += 1
-            else:
-                filecount += 1
-                
-    print("{} files scanned!".format(filecount))
+    #Globals
+    path = pathlib.Path(directory)
+    fname = ''
+    ftype = ''
+    #Search for db and sqlite files.
+    #Could probably have a function iterate 
+    #over a list of common extensions.
+    sqldb = path.rglob("*[glassdoor]*.sqlite")
+    normdb = path.rglob("*[glassdoor]*.db")
+    #Store our db files in a list.
+    grabdb(sqldb)
+    grabdb(normdb)
+
+    dbfiles = len(dirs)
+    count = 0
+    for file in dirs:
+        count += 1
+        print("{}% of the way done".format(math.floor((count / dbfiles) * 100)))
+        #Might have to pull the file name itself out for dir creation.
+        runthrough(file)
+       
     print("{} database files found!".format(dbfiles))
 
-def runthrough(dbpath, db):
-    if os.path.exists(dbpath):
-        #Verify that the target is a glassdoor database.
-        if "glassdoor" in dbpath.lower():
-            #Iterate over our pre-made queries.
-            #We can return true to track our count of databases.
-            for i in query.getSelect():
-                dbexec(db, i, os.path.abspath(dbpath))
-            return True
-    #If neither if statement is true, then we can return False by default.
-    return False
+def runthrough(db):
+    #Iterate over our pre-made queries.
+    for i in query.getSelect():
+        dbexec(db, i)
 
 #dbexec will open up a database using sqlite3 and execute an argument passed to it.
 #any errors will be logged to an error file.
 #Filedate is based on HourMinute
-def dbexec(db, command, fullpath):
+def dbexec(db, command):
     try:
-        conn = sqlite3.connect('{}'.format(fullpath))
+        conn = sqlite3.connect('{}'.format(db))
         curr = conn.cursor()
 
         #Some messy directory formatting to get what we want.
-        dirDate = str(datetime.datetime.now()).split(" ")[0]
-        dirDesc = str(db.split(" ")[-1].split(".")[0])
-        dirName = "{}-{}".format(dirDate, dirDesc)
-        
-        #Make a new directory to store the output in.
-        try:
-            os.mkdir(dirName)
-        except FileExistsError:
-            #Folder already exists so nothing to do.
-            pass
-
+        dirDesc = str(db.split(" ")[-1].split(".")[0]).split("/")[-1]
+        print("Dirdesc: {}".format(dirDesc))
         fileDate =  str(datetime.datetime.now()).split(" ")[1].split(":")[:2]
         fileDate = fileDate[0] + fileDate[1]
         fileCommand = command.split(" ")[:1][0]
         fileName = "{}{}{}".format(dirDesc, fileCommand, fileDate)
-        
+        print("FileName: {}".format(fileName))
         #Open a file and write the command output to it.
-        with open("{}/{}.csv".format(dirName, fileName), "w+") as newFile:
+        with open("{}.csv".format(fileName), "w+") as newFile:
             for row in curr.execute(command):
                 newFile.write(str(row))
                 
         conn.close()
     except:
-        with open("errorlog.csv", "w+") as errlog:
-            errlog.write("Error with database: {} performing command: {}".format(db, command))
+        logerror("Error with database: {} performing command: {}".format(db, command))
 
 #We could add a menu here depending on how we want to expand the program. 
 if __name__ == '__main__':
-    print("Running glass.py v0.0.1")
+    print("Running glass.py v0.1.0.0")
     script, directory = argv
     crawl(directory)
