@@ -84,6 +84,6 @@ def dbexec(db, command):
 
 #We could add a menu here depending on how we want to expand the program. 
 if __name__ == '__main__':
-    print("Running glass.py v0.1.0.1")
+    print("Running glass.py v0.1.0.2")
     script, directory = argv
     crawl(directory)
