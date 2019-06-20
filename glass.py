@@ -51,16 +51,11 @@ def crawl(directory):
     for file in dirs:
         count += 1
         print("{}% of the way done".format(math.floor((count / dbfiles) * 100)))
-        #Might have to pull the file name itself out for dir creation.
-        #if path(str(file)).exists():
-        runthrough(file)
+        #Iterate over our pre-made queries.
+        for i in query.getSelect():
+          dbexec(file, i)
        
     print("{} database files found!".format(dbfiles))
-
-def runthrough(db):
-    #Iterate over our pre-made queries.
-    for i in query.getSelect():
-        dbexec(db, i)
 
 #dbexec will open up a database using sqlite3 and execute an argument passed to it.
 #any errors will be logged to an error file.
@@ -81,9 +76,8 @@ def dbexec(db, command):
         #Open a file and write the command output to it.
         with open("{}.csv".format(fileName), "w+") as newFile:
             for row in curr.execute(command):
-                newFile.write(str(row))
-                
-        conn.close()
+                newFile.write(str(row))  
+            conn.close()
     
     except:
         logerror("Error with database: {} performing command: {}".format(db, command))
