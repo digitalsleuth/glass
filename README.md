@@ -2,6 +2,8 @@
 
 Glass is a python script that traverses through iphone backups to locate sqlite3 database files for the job search application known as "Glassdoor". The program will then attempt to execute pre-made queries on them and parse the output to csv files. The files are generated based on database name, type of command used, and datetime information.
 
+The folder you run the program in will be the one that the reports are sent.
+
 Dependencies:
 
 - [pathlib](https://docs.python.org/3.7/library/pathlib.html)
@@ -46,4 +48,5 @@ Future goals I have for this are:
 - Expand sql queries.
 - Create arguments for app type.
  - Rather than just check for glassdoor by default, I'd like to be able to have the user pass in the app they wish to analyze. This would require having multiple files with queries that work for those databases though. 
+  - Custom report destinations
  - More options in general, such as specificying output type, running only SELECT statements, etc.
