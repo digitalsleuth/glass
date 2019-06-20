@@ -14,50 +14,36 @@ except ImportError:
            Please make sure to add them to run the program!")
 
 '''
-#The glass.py script will traverse through a phone backup and look for database files. 
-#It will then open these files up in sqlite3 and attempt to execute queries. 
-#The output of each query will be stored in a file that is inside of a new folder.
-#If a query causes an error, rather than a new file being made, the output will go to an error log.
+Glass is a python script that traverses through iphone backups to locate sqlite3 database files 
+for the job search application known as "Glassdoor". 
+The program will then attempt to execute pre-made queries on them and parse the output to csv files. 
+The files are generated based on database name, type of command used, and datetime information.
 
-#Naming format: [date][root]/[db][query].csv
+The folder you run the program in will be the one that the reports are sent.
 
-#Example:
-#2019-5-07-zachbackup/glassdoorSELECT.csv
-#2019-6-04-zachbackup/glassdoorJOIN.csv
-#2019-6-05-zachbackup2/glassdoorSELECT.csv
+Dependencies:
+    pathlib
 
-#Dependencies: 
-#pip install python-magic
+Naming format: [db][query][time].csv
+Example:
+ - glassdoorSELECT2015 (20 hours / 15 minutes)
 '''
 #Quick function to log errors.
 def logerror(message):
   with open("errorlog.csv", "w+") as errlog:
     errlog.write(message)
 
-dirs = []
-#Function to grab dbpaths out of a pathlib object.
-def grabdb(obj):
-  for i in obj:
-    #Verify that the target is a glassdoor database.
-    if "glassdoor" in str(i).lower():
-      dirs.append(str(i))
-
 #Crawl uses pathlib to find all database files.
 #We then call runthrough which tries to open them up.
 def crawl(directory):
-    #Globals
     path = pathlib.Path(directory)
-    fname = ''
-    ftype = ''
     #Search for db and sqlite files.
     #Could probably have a function iterate 
     #over a list of common extensions.
-    sqldb = path.rglob("*[glassdoor]*.sqlite")
-    normdb = path.rglob("*[glassdoor]*.db")
+    sqldb = [str(x) for x in path.rglob("*[glassdoor]*.sqlite")]
+    normdb = [str(w) for w in path.rglob("*[glassdoor]*.db")]
     #Store our db files in a list.
-    grabdb(sqldb)
-    grabdb(normdb)
-
+    dirs = sqldb + normdb
     dbfiles = len(dirs)
     count = 0
     for file in dirs:
@@ -100,6 +86,6 @@ def dbexec(db, command):
 
 #We could add a menu here depending on how we want to expand the program. 
 if __name__ == '__main__':
-    print("Running glass.py v0.1.0.0")
+    print("Running glass.py v0.1.0.1")
     script, directory = argv
     crawl(directory)
