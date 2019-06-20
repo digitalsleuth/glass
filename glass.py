@@ -36,13 +36,15 @@ def logerror(message):
 #Crawl uses pathlib to find all database files.
 #We then call runthrough which tries to open them up.
 def crawl(directory):
+    #if "glassdoor" in str(i).lower()
     path = pathlib.Path(directory)
     #Search for db and sqlite files.
     #Could probably have a function iterate 
     #over a list of common extensions.
-    sqldb = [str(x) for x in path.rglob("*[glassdoor]*.sqlite")]
-    normdb = [str(w) for w in path.rglob("*[glassdoor]*.db")]
+    sqldb = [str(x) for x in path.rglob("*.sqlite") if "glassdoor" in str(x).lower()]
+    normdb = [str(x) for x in path.rglob("*.db") if "glassdoor" in str(x).lower()]
     #Store our db files in a list.
+    #print(sqldb)
     dirs = sqldb + normdb
     dbfiles = len(dirs)
     count = 0
@@ -50,6 +52,7 @@ def crawl(directory):
         count += 1
         print("{}% of the way done".format(math.floor((count / dbfiles) * 100)))
         #Might have to pull the file name itself out for dir creation.
+        #if path(str(file)).exists():
         runthrough(file)
        
     print("{} database files found!".format(dbfiles))
@@ -69,18 +72,19 @@ def dbexec(db, command):
 
         #Some messy directory formatting to get what we want.
         dirDesc = str(db.split(" ")[-1].split(".")[0]).split("/")[-1]
-        print("Dirdesc: {}".format(dirDesc))
+        #print("Dirdesc: {}".format(dirDesc))
         fileDate =  str(datetime.datetime.now()).split(" ")[1].split(":")[:2]
         fileDate = fileDate[0] + fileDate[1]
         fileCommand = command.split(" ")[:1][0]
         fileName = "{}{}{}".format(dirDesc, fileCommand, fileDate)
-        print("FileName: {}".format(fileName))
+        #print("FileName: {}".format(fileName))
         #Open a file and write the command output to it.
         with open("{}.csv".format(fileName), "w+") as newFile:
             for row in curr.execute(command):
                 newFile.write(str(row))
                 
         conn.close()
+    
     except:
         logerror("Error with database: {} performing command: {}".format(db, command))
 
