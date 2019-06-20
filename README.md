@@ -1,4 +1,4 @@
-# Glass v.0.1.0.0 - A Tool for Automated Glassdoor Analysis
+# Glass v.0.1.0.1 - A Tool for Automated Glassdoor Analysis
 
 Glass is a python script that traverses through iphone backups to locate sqlite3 database files for the job search application known as "Glassdoor". The program will then attempt to execute pre-made queries on them and parse the output to csv files. The files are generated based on database name, type of command used, and datetime information.
 
