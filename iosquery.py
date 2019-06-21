@@ -6,7 +6,8 @@ class Iosquery(object):
 
     def __init__(self):
         self.s1 = "SELECT ZNAME FROM ZMOEMPLOYER;"
-        self.SELECT = [self.s1]
+        self.s2 = "SELECT * FROM ZMOEMPLOYER;"
+        self.SELECT = [self.s1, self.s2]
     
     def getSelect(self):
         return self.SELECT
