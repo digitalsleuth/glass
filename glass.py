@@ -125,17 +125,20 @@ def display_db(dbs):
 	return common_names
 
 #Command input.
-def manual_db(database, common_name):
+def manual_db(database, common_name, path):
 	db_obj = db_connect(database)
 	curr = db_obj[0]
 	conn = db_obj[1]
 	print(f"Connected successfully to {database}")
 	while True:
 		response = input(f"{common_name}> ")
-		if response == "quit":
+		if response == ".quit":
 			print("Quitting the program.")
 			conn.close()
 			sys.exit()
+		elif response == ".list":
+			manual_mode(path)
+		#Add .table command later
 		try:
 			query = curr.execute(response)
 			for row in query:
@@ -160,11 +163,11 @@ def manual_mode(path):
 	while True:
 		common_names = display_db(dbs)
 		response = input("Please enter the number of the db you want to access or 'quit' to exit.\n")
-		if response.lower() == "quit":
+		if response.lower() == ".quit":
 			sys.exit()
 		# Need to add checks in the future for if they are entering actual integers.
 		elif int(response) in range(len(dbs)):
-			manual_db(dbs[int(response)], common_names[int(response)])
+			manual_db(dbs[int(response)], common_names[int(response)], path)
 		else:
 			print("Invalid response.")
 
