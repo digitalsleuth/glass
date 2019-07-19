@@ -1,18 +1,4 @@
 #!/usr/bin/env python3
-import pathlib
-from sys import argv
-from datetime import datetime as dt
-import sqlite3
-import math
-import argparse
-
-#Check if we have our custom queries.
-try:
-	from iosquery import query
-
-except ImportError:
-	print("The iosqueries are not in the same directory! \n\
-		Please make sure to add them to run the program!")
 
 '''
 Glass is a python script that traverses through iphone backups
@@ -26,8 +12,16 @@ The folder you run the program in will hold the reports.
 
 ./glass.py [path] -m
 '''
-#Open up our queries file.
-def openQueries():
+
+import pathlib
+from sys import argv
+from datetime import datetime as dt
+import sqlite3
+import math
+import argparse
+
+# Open up our queries file.
+def open_queries():
 	query = []
 	with open("queries/iosquery.csv", "r+") as iosquery:
 		for row in iosquery:
@@ -35,84 +29,134 @@ def openQueries():
 				query.append(command.strip())
 	return query
 			 
+def write_queries(command):
+	with open("queries/iosquery.csv", "w+") as iosquery:
+		iosquery.write(f"{command},")
 
-#Quick function to log errors.
-def logerror(message):
+# Quick function to log errors.
+def log_error(message):
 	with open("errorlog.csv", "w+") as errlog:
 		errlog.write(message)
 
-#Uses pathlib's rglob function to search fstrings for files that have keyword in them.
+# Uses pathlib's rglob function to search fstrings for files that have keyword in them.
 def pattern(keyword, extension, pathObj):
-	filegrab = pathObj.rglob(f"*.{extension}")
+	file_grab = pathObj.rglob(f"*.{extension}")
 	matches = []
-	for file in filegrab:
+	for file in file_grab:
 		if f"{keyword}" in str(file).lower():
 			matches.append(str(file))
 	return matches
 
 
-#We find all glassdoor databases along a path.
+# We find all glassdoor databases along a path.
 def crawl(directory):
 	path = pathlib.Path(directory)
 	
-	#Search for db and sqlite files.
-	sqlitedb = pattern(keyword, "sqlite", path)
-	regulardb = pattern(keyword, "db", path)
+	# Search for db and sqlite files.
+	sqlite_db = pattern(keyword, "sqlite", path)
+	regular_db = pattern(keyword, "db", path)
 
-    	dbs = sqldb + normdb #Store all the matches in a list.
+    	dbs = sqldite_b + regular_db  # Store all the matches in a list.
 	return dbs
 
-#Cycles through every db found and running queries against it.
-def runThrough(dbs):
-	for count, file in enumerate(dirs):
-		progress = math.floor((count / len(dirs)) * 100))
+# Cycles through every db found and running queries against it.
+def run_through(dbs):
+	for count, file in enumerate(dbs):
+		progress = math.floor((count / len(dbs)) * 100))
 		print(f"{progress}% of the way done")
-		#Iterate over our pre-made queries.
-		for query in openQueries():
-			DBexec(file, query)
+		# Iterate over our pre-made queries.
+		for query in open_queries():
+			db_exec(file, query)
 	       
 	 print(f"{} database files found!")
 
-#Returns an opened database object.
-#If fails we log an error.
-def dbConnect(db):
+# Returns an opened database object.
+# If fails we log an error.
+def db_connect(db):
 	try:
 		conn = sqlite3.connect('{}'.format(db))
 		curr = conn.cursor()
-		return curr
+		return [curr, conn]
 	except:
-		logerror(f"Error opening database: {db}!")
+		log_error(f"Error opening database: {db}!")
 
-#Using string formatting to create a name for our results.
-def generateName(db, command):
+# Using string formatting to create a name for our results.
+def generate_name(db, command):
 	date = dt.now()
 	filedate = f"{date.day}-{date.month}-{date.year}"
 	command = command.split(" ")[:1][0]
 	return f"{keyword}{command}{date}"
 
-#Try to open the database file.
-#If successful it will pass a query.
-#Otherwise an error will be logged.
-def DBexec(db, command):
-	dbcurr = dbConnect() #Db object
-	filename = generateName(db, command)
+# Try to open the database file.
+# If successful it will pass a query.
+# Otherwise an error will be logged.
 
-	#Open a file and write the command output to it.
-	with open(f"{filename}.csv", "w+") as outputfile:
-	    for row in curr.execute(command):
-		newFile.write(str(row))  
-	    conn.close()
+### Might want to generalize this and write output in a different function ###
+### - write_report() ?
 
-	except:
-	logerror("Error with database: {} performing command: {}".format(db, command))
+def db_exec(db, command):
+	db_obj = db_connect() # Db object
+	curr = db_obj[0]
+	filename = generate_name(db, command)
 
-## EACH FUNCTION SHOULD DO ONE THING. CRAWL SHOULD JUST CRAWL AND RETURN ALL DBs.
+	# Open a file and write the command output to it.
+	with open(f"{filename}.csv", "w+") as output_file:
+            try:
+	    	for row in curr.execute(command):
+	            output_file.write(str(row))  
+            except:
+                log_error(f"Error with running {command} on {db}")
 
-#Manually interacting with the database.
-def manualMode(path):
-	pass
+	db_obj[1].close()  # Close the database
 
-#We could add a menu here depending on how we want to expand the program. 
+
+# Manually interacting with the database.
+def display_db(dbs):
+	common_names = []
+	for count, file in enumerate(dbs):
+		path = pathlib.Path(file)
+		common_names.append(path.name)
+		print(f"{count}|{path.name}")
+	return common_names
+
+#Command input.
+def manual_db(database, common_name):
+	db_obj = db_connect(database)
+	curr = db_obj[0]
+	conn = db_obj[1]
+	print("Connected successfully to {database}")
+	while True:
+		response = input("{common_name}> ")
+		try:
+			query = curr.execute(response)
+			for row in query:
+				print(row)
+			write_queries(query)
+			
+		except:
+			log_error(f"{response} did not work.")
+		
+
+# Main loop for manual mode.
+# User will input a number of a database.
+# They can then access that db.
+def manual_mode(path):
+	print("Manual Mode selected. Please wait for crawling to finish.")
+	dbs = crawl(path)
+	print("Crawling finished.")
+	while True:
+		response = input("Please enter the number of the db you want to access or 'quit' to exit.")
+		common_names = display_db(dbs)
+		if response.lower() == "quit":
+			sys.exit()
+		elif int(response) in range(len(dbs)):
+			manual_db(dbs[int(response), common_names[int(response)])
+		else:
+			print("Invalid response.")
+
+
+
+# We could add a menu here depending on how we want to expand the program. 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Glass 1.0.3 is a tool for interacting with glassdoor databases.')
 	group = parser.add_mutually_exclusive_group(required=True)
@@ -121,21 +165,14 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 	
 	global keyword	
-	keyword = "glassdoor" #Could make this a command line arg.
+	keyword = "glassdoor"  # Could make this a command line arg.
 	
 	if args.m:
-		manualMode(path)
+		manual_mode(path)
 	else:
 		dbs = crawl(path)
-		runThrough(dbs)
+		run_through(dbs)
 
-'''
-LOGIC
-IF m flag (manual db)
-PRINT numbered list of datbases found
-User inputs the number of a DB or 0 to exit
-TRY query
-IF SUCCESSFUL save query and print output
-'''
+
 
 
