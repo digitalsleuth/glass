@@ -19,6 +19,7 @@ from datetime import datetime as dt
 import sqlite3
 import math
 import argparse
+import sys
 
 # Open up our queries file.
 def open_queries():
@@ -44,6 +45,7 @@ def pattern(keyword, extension, pathObj):
 	matches = []
 	for file in file_grab:
 		if f"{keyword}" in str(file).lower():
+			print(str(file))
 			matches.append(str(file))
 	return matches
 
@@ -56,19 +58,19 @@ def crawl(directory):
 	sqlite_db = pattern(keyword, "sqlite", path)
 	regular_db = pattern(keyword, "db", path)
 
-    	dbs = sqldite_b + regular_db  # Store all the matches in a list.
+	dbs = sqlite_db + regular_db  # Store all the matches in a list.
 	return dbs
 
 # Cycles through every db found and running queries against it.
 def run_through(dbs):
 	for count, file in enumerate(dbs):
-		progress = math.floor((count / len(dbs)) * 100))
+		progress = math.floor((count / len(dbs)) * 100)
 		print(f"{progress}% of the way done")
 		# Iterate over our pre-made queries.
 		for query in open_queries():
 			db_exec(file, query)
 	       
-	 print(f"{} database files found!")
+	print(f"{len(dbs)} database files found!")
 
 # Returns an opened database object.
 # If fails we log an error.
@@ -101,11 +103,11 @@ def db_exec(db, command):
 
 	# Open a file and write the command output to it.
 	with open(f"{filename}.csv", "w+") as output_file:
-            try:
-	    	for row in curr.execute(command):
-	            output_file.write(str(row))  
-            except:
-                log_error(f"Error with running {command} on {db}")
+		try:
+			for row in curr.execute(command):
+				output_file.write(str(row))  
+		except:
+			log_error(f"Error with running {command} on {db}")
 
 	db_obj[1].close()  # Close the database
 
@@ -144,13 +146,18 @@ def manual_mode(path):
 	print("Manual Mode selected. Please wait for crawling to finish.")
 	dbs = crawl(path)
 	print("Crawling finished.")
+	if len(dbs) == 0:
+		print("No databases found. Closing program.")
+		sys.exit()
+
 	while True:
 		response = input("Please enter the number of the db you want to access or 'quit' to exit.")
 		common_names = display_db(dbs)
 		if response.lower() == "quit":
 			sys.exit()
+		# Need to add checks in the future for if they are entering actual integers.
 		elif int(response) in range(len(dbs)):
-			manual_db(dbs[int(response), common_names[int(response)])
+			manual_db(dbs[int(response)], common_names[int(response)])
 		else:
 			print("Invalid response.")
 
@@ -161,16 +168,16 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Glass 1.0.3 is a tool for interacting with glassdoor databases.')
 	group = parser.add_mutually_exclusive_group(required=True)
 	parser.add_argument('path', help="Path: The path files will be read or scanned from.")
-	group.add_argument('-m', action= "store_true", help="Manual interaction with databases.)
+	group.add_argument('-m', action= "store_true", help="Manual interaction with databases.")
 	args = parser.parse_args()
 	
 	global keyword	
 	keyword = "glassdoor"  # Could make this a command line arg.
 	
 	if args.m:
-		manual_mode(path)
+		manual_mode(args.path)
 	else:
-		dbs = crawl(path)
+		dbs = crawl(args.path)
 		run_through(dbs)
 
 
