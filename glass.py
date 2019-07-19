@@ -11,6 +11,10 @@ and parse the output to csv files.
 The folder you run the program in will hold the reports.
 
 ./glass.py [path] -m
+
+#Add function for manual:
+- up arrow lets you cycle through previous commands
+- store command history
 '''
 
 import pathlib
@@ -31,13 +35,13 @@ def open_queries():
 	return query
 			 
 def write_queries(command):
-	with open("queries/iosquery.csv", "w+") as iosquery:
+	with open("queries/iosquery.csv", "a") as iosquery:
 		iosquery.write(f"{command},")
 
 # Quick function to log errors.
 def log_error(message):
-	with open("errorlog.csv", "w+") as errlog:
-		errlog.write(message)
+	with open("errorlog.csv", "a") as errlog:
+		errlog.write(f"{dt.now()}{message}\n")
 
 # Uses pathlib's rglob function to search fstrings for files that have keyword in them.
 def pattern(keyword, extension, pathObj):
@@ -45,7 +49,6 @@ def pattern(keyword, extension, pathObj):
 	matches = []
 	for file in file_grab:
 		if f"{keyword}" in str(file).lower():
-			print(str(file))
 			matches.append(str(file))
 	return matches
 
@@ -76,7 +79,7 @@ def run_through(dbs):
 # If fails we log an error.
 def db_connect(db):
 	try:
-		conn = sqlite3.connect('{}'.format(db))
+		conn = sqlite3.connect(f'{db}')
 		curr = conn.cursor()
 		return [curr, conn]
 	except:
@@ -97,7 +100,7 @@ def generate_name(db, command):
 ### - write_report() ?
 
 def db_exec(db, command):
-	db_obj = db_connect() # Db object
+	db_obj = db_connect(db) # Db object
 	curr = db_obj[0]
 	filename = generate_name(db, command)
 
@@ -126,14 +129,18 @@ def manual_db(database, common_name):
 	db_obj = db_connect(database)
 	curr = db_obj[0]
 	conn = db_obj[1]
-	print("Connected successfully to {database}")
+	print(f"Connected successfully to {database}")
 	while True:
-		response = input("{common_name}> ")
+		response = input(f"{common_name}> ")
+		if response == "quit":
+			print("Quitting the program.")
+			conn.close()
+			sys.exit()
 		try:
 			query = curr.execute(response)
 			for row in query:
-				print(row)
-			write_queries(query)
+				print(str(row))
+			write_queries(response)
 			
 		except:
 			log_error(f"{response} did not work.")
@@ -151,8 +158,8 @@ def manual_mode(path):
 		sys.exit()
 
 	while True:
-		response = input("Please enter the number of the db you want to access or 'quit' to exit.")
 		common_names = display_db(dbs)
+		response = input("Please enter the number of the db you want to access or 'quit' to exit.\n")
 		if response.lower() == "quit":
 			sys.exit()
 		# Need to add checks in the future for if they are entering actual integers.
@@ -166,9 +173,8 @@ def manual_mode(path):
 # We could add a menu here depending on how we want to expand the program. 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Glass 1.0.3 is a tool for interacting with glassdoor databases.')
-	group = parser.add_mutually_exclusive_group(required=True)
 	parser.add_argument('path', help="Path: The path files will be read or scanned from.")
-	group.add_argument('-m', action= "store_true", help="Manual interaction with databases.")
+	parser.add_argument('-m', action= "store_true", help="Manual interaction with databases.")
 	args = parser.parse_args()
 	
 	global keyword	
