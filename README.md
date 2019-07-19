@@ -7,6 +7,9 @@ Glass is a python script that traverses through iphone backups to locate sqlite3
 
 The folder you run the program in will be the one that the reports are sent.
 
+Manual mode can be enabled with the "-m" flag. This will display a list of databases and let you select one.
+Once you are inside of the database, you may send it commands, return to the main list with ".list", or quit with ".quit"
+
 Dependencies:
 
 - [pathlib](https://docs.python.org/3.7/library/pathlib.html)
@@ -33,13 +36,13 @@ Dependencies:
 ### Windows
 
 - Open up command line and navigate to the directory. 
-- `./glass.py [path to directory]`
+- `./glass.py [path to directory] [0m]`
 
 ### Linux
 
 - After following installation, you should already be in the directory.
 - Run `chmod +x *` to allow all the files to be run.
-- `./glass.py [path to directory]`
+- `./glass.py [path to directory] [-m]`
 
 
 ## Development
