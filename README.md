@@ -8,7 +8,7 @@ Glass is a python script that traverses through iphone backups to locate sqlite3
 The folder you run the program in will be the one that the reports are sent.
 
 Manual mode can be enabled with the "-m" flag. This will display a list of databases and let you select one.
-Once you are inside of the database, you may send it commands, return to the main list with ".list", or quit with ".quit"
+Once you are inside of the database, you may send it commands, return to the main list with ".list", view tables in the database with ".table", or quit with ".quit"
 
 Dependencies:
 
@@ -36,7 +36,7 @@ Dependencies:
 ### Windows
 
 - Open up command line and navigate to the directory. 
-- `./glass.py [path to directory] [0m]`
+- `./glass.py [path to directory] [-m]`
 
 ### Linux
 
@@ -48,11 +48,3 @@ Dependencies:
 ## Development
 
 Feel free to submit feedback, bug reports, and your own tweaks to the program! I plan on having a schedule to update this tool, but I will be working on making others in the meanwhile. 
-
-Future goals I have for this are:
-
-- Expand sql queries.
-- Create arguments for app type.
- - Rather than just check for glassdoor by default, I'd like to be able to have the user pass in the app they wish to analyze. This would require having multiple files with queries that work for those databases though. 
-  - Custom report destinations
- - More options in general, such as specificying output type, running only SELECT statements, etc.
