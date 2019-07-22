@@ -32,7 +32,8 @@ def open_queries():
 	with open("queries/iosquery.csv", "r+") as iosquery:
 		for row in iosquery:
 			for command in row.split(","):
-				query.append(command.strip())
+				if len(command.strip()) > 0:
+					query.append(command.strip())
 	return query
 
 # Checking for duplicates before appending new sql commands to file.			 
@@ -51,16 +52,13 @@ def log_error(message):
 		errlog.write(f"{dt.now()}{message}\n")
 
 # Handles query output to file.
-def auto_report(db_response):
-	filename = generate_name(db, command)
-
+def auto_report(db, db_response, query):
+	filename = generate_name(db, query)
+	#print(db_response)
 	# Open a file and write the command output to it.
-	with open(f"{filename}.csv", "w+") as output_file:
-		try:
-			for row in db_response:
-				output_file.write(str(row))  
-		except:
-			log_error(f"Error with running {command} on {db}")
+	with open(f"reports/{filename}.csv", "w+") as output_file:
+		for row in db_response:
+				output_file.write(str(row)) 	
 
 ### UTILITIES
 # Uses pathlib's rglob function to search fstrings for files that have keyword in them.
@@ -96,9 +94,10 @@ def display_db(dbs):
 # Using string formatting to create a name for our results.
 def generate_name(db, command):
 	date = dt.now()
-	filedate = f"{date.day}-{date.month}-{date.year}"
+	filedate = f"{date.day}-{date.month}-{date.year}-{date.hour}-{date.hour}-{date.minute}"
 	command = command.split(" ")[:1][0]
-	return f"{keyword}{command}{date}"
+	#print(filedate)
+	return f"{keyword}{command}{filedate}"
 
 # Returns an opened database object.
 # If fails we log an error.
@@ -119,27 +118,31 @@ def sqlite_tables(db):
 # Try to open the database file.
 # If successful it will pass a query.
 # Otherwise an error will be logged.
-
-## TODO handle when the connection closes
 def db_exec(db, command):
 	db_obj = db_connect(db) #Db object
 	curr = db_obj[0]
 	conn = db_obj[1]
-	response = curr.execute(command)
+	try:
+		response = [str(x) for x in curr.execute(command)]
+		conn.close()
+		return response
+	except:
+		log_error(f"Error with running {command} on {db}")
 	#conn.close()  # Close the database
-	return response
+
 
 ### AUTO MODE
 # Cycles through every db found and running queries against it.
 def run_through(dbs):
-	for count, file in enumerate(dbs):
+	for count, database in enumerate(dbs):
 		progress = math.floor((count / len(dbs)) * 100)
 		print(f"{progress}% of the way done")
 		# Iterate over our pre-made queries.
 		for query in open_queries():
-			response = db_exec(file, query)
-			auto_report(response)
-	       
+			#print(f"QUERY: {query}")
+			response = db_exec(database, query)
+			if not(response is None):
+				auto_report(database, response, query)    
 	print(f"{len(dbs)} database files found!")
 
 ### MANUAL MODE
