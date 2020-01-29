@@ -27,7 +27,7 @@ Dependencies:
 
 - Open command line.
 - Navigate to the directory you want to work in.
-- `git clone https://github.com/IronCityCoder/glass.git`
+- `git clone https://github.com/steelsleuth/glass.git`
 - This makes a new folder called 'glass'
 - Use the command `cd glass` to navigate to the tools.
 
